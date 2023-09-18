@@ -1,12 +1,20 @@
 
 
-# To run
+## To run
 ``` 
 streamlit run app.py
 ```
 
+## Packages
+``` 
+pip install python-dotenv
+pip install streamlit
+pip install openai
+pip install langchain
+pip install wikipedia
+```
 
-# Problems 
-1) Chat History doesn't appear when multiple topics are entered.
+
+
 
 

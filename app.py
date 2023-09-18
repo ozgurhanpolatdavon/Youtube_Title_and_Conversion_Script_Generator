@@ -7,8 +7,13 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain, SequentialChain
 from langchain.memory import ConversationBufferMemory
 from langchain.utilities import WikipediaAPIWrapper
+from os import environ
+from dotenv import load_dotenv
 
-os.environ["OPENAI_API_KEY"] = apikey
+load_dotenv()
+
+apikey = environ['OPENAI_API_KEY']
+print(apikey)
 
 # App framework
 st.title("🦜️🔗 Youtube GPT Creator")
@@ -17,7 +22,8 @@ prompt = st.text_input("Plug in your prompt here")
 # Llms
 llm = OpenAI(
     temperature=0.9,
-    model_name="gpt-3.5-turbo"
+    model_name="gpt-3.5-turbo",
+    openai_api_key=apikey,
 )
 
 title_template = PromptTemplate(
