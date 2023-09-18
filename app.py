@@ -1,19 +1,19 @@
-import os
-from apikey import apikey
-
 import streamlit as st
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain, SequentialChain
 from langchain.memory import ConversationBufferMemory
 from langchain.utilities import WikipediaAPIWrapper
+from langchain.agents import Tool
+from langchain.agents import initialize_agent
+from langchain.agents import AgentType
 from os import environ
 from dotenv import load_dotenv
+
 
 load_dotenv()
 
 apikey = environ['OPENAI_API_KEY']
-print(apikey)
 
 # App framework
 st.title("🦜️🔗 Youtube GPT Creator")
@@ -22,32 +22,39 @@ prompt = st.text_input("Plug in your prompt here")
 # Llms
 llm = OpenAI(
     temperature=0.9,
-    model_name="gpt-3.5-turbo",
+    model_name="text-davinci-003",
     openai_api_key=apikey,
 )
 
-title_template = PromptTemplate(
-    input_variables=['topic'],
-    template="write me a youtube video title about {topic}"
-)
-
 script_template = PromptTemplate(
-    input_variables=['title', "wikipedia_research"],
-    template="write me a youtube video script based on this title :  {title} while reveraging this wikipedia research : {wikipedia_research}"
+    input_variables=['topic'],
+    template="write me a youtube video title about {topic} and write me a youtube video script based on the title while reveraging the wikipedia research"
 )
 
-title_memory = ConversationBufferMemory(input_key='topic', memory_key="chat history")
-script_memory = ConversationBufferMemory(input_key='title', memory_key="chat history")
+agent_memory = ConversationBufferMemory(memory_key="agent memory history")
 
-title_chain = LLMChain(llm=llm, prompt=title_template, output_key="title", verbose=True, memory=title_memory)
-script_chain = LLMChain(llm=llm, prompt=script_template, output_key="script", verbose=True, memory=script_memory)
 #sequential_chain = SequentialChain(chains=[title_chain, script_chain], input_variables=['topic'],
 #                                   output_variables=["title", "script"], verbose=True)
 
-
 wiki = WikipediaAPIWrapper()
 
+#Custom Agent
+tools = [
+    Tool(
+      name="wikipedia search",
+      func=wiki.run,
+      description="useful for when you need to get some information about a topic to generate something"
+    ),
+
+]
+agent_chain = initialize_agent(tools,llm,agent=AgentType.CONVERSATIONAL_REACT_DESCRIPTION,verbose=True,memory=agent_memory)
+
 if prompt:
+
+    res = agent_chain.run({"input": script_template.format(topic=prompt),"chat_history": []})
+    print(res)
+
+    """ 
     title = title_chain.run(prompt)
     wiki_research = wiki.run(prompt)
     script = script_chain.run(title=title, wikipedia_research=wiki_research)
@@ -63,3 +70,4 @@ if prompt:
         st.info(script_memory.buffer)
     with st.expander("Wikipedia History"):
         st.info(wiki_research)
+"""
